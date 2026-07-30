@@ -1,0 +1,73 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "6e17c88d-ca4c-4e27-990f-312ea07295ab",
+  "prevId": "5c9f40a1-19b7-44cb-a992-336661bd4e2e",
+  "tables": {
+    "rate_limits": {
+      "name": "rate_limits",
+      "columns": {
+        "client_hash": {
+          "name": "client_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "window_start": {
+          "name": "window_start",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "rate_limits_expires_at_idx": {
+          "name": "rate_limits_expires_at_idx",
+          "columns": [
+            "expires_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "rate_limits_client_hash_window_start_pk": {
+          "columns": [
+            "client_hash",
+            "window_start"
+          ],
+          "name": "rate_limits_client_hash_window_start_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
