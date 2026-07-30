@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "doi2bbt",
+  "account_id": "4549121aa61e17f0c85386cb9f9f63e6",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "doi2bbt.org",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.doi2bbt.org",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "doi2bbt-d1",
+      "database_id": "45a24441-6c29-4347-a6bd-f03c4f036e02",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

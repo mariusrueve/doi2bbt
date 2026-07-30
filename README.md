@@ -51,9 +51,53 @@ npm run build
 npm run test:contract
 ```
 
-The production service uses a Cloudflare D1 binding named `DB` for short-lived
-rate-limit counters and a `RATE_LIMIT_SECRET` runtime secret for daily client
-hashes. It uses the Cloudflare Cache API for 24-hour citation caching.
+## Cloudflare deployment
+
+The production service runs directly in the project owner's Cloudflare account.
+Cloudflare Workers executes the application, Workers Assets serves the frontend,
+and a D1 binding named `DB` stores short-lived rate-limit counters. A
+`RATE_LIMIT_SECRET` runtime secret creates daily client-address hashes, and the
+Cloudflare Cache API caches resolved citations for 24 hours.
+
+Authenticate once, create the EU-jurisdiction database, and copy the returned
+database ID into `wrangler.jsonc`:
+
+```sh
+npx wrangler login
+npx wrangler d1 create doi2bbt-d1 --jurisdiction=eu
+```
+
+Apply the schema and set a randomly generated secret without committing it:
+
+```sh
+npm run db:migrate:remote
+openssl rand -hex 32 | npx wrangler secret put RATE_LIMIT_SECRET
+```
+
+Validate and deploy:
+
+```sh
+npm run deploy:check
+npm run deploy
+DOI2BBT_BASE_URL=https://doi2bbt.<account-subdomain>.workers.dev npm run smoke
+```
+
+`wrangler.jsonc` is the source of truth for bindings, observability, and custom
+domains. Production changes should be made there rather than only in the
+Cloudflare dashboard.
+
+The intended deployment stays on Workers Free. As of July 2026, that plan
+includes 100,000 dynamic Worker requests per day, while static asset requests
+are free and unlimited. D1 Free includes 5 million rows read per day, 100,000
+rows written per day, and 5 GB of storage. Do not enable Workers Paid for this
+project without an explicit cost review.
+
+### Rollback
+
+Before changing production DNS, export the zone and retain the previous Sites
+A and CNAME records. If the Worker custom domains fail validation, remove those
+domains and restore the saved web records. Do not alter DNSSEC, registrar, or
+email-routing records during a rollback.
 
 ## Privacy
 

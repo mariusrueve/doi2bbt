@@ -1,8 +1,10 @@
+import Link from "next/link";
+
 export function Wordmark() {
   return (
-    <a className="wordmark" href="/" aria-label="doi2bbt home">
+    <Link className="wordmark" href="/" aria-label="doi2bbt home">
       doi<span>2</span>bbt
-    </a>
+    </Link>
   );
 }
 
@@ -11,7 +13,7 @@ export function SiteHeader() {
     <header className="site-header">
       <Wordmark />
       <nav aria-label="Primary navigation">
-        <a href="/docs">API &amp; docs</a>
+        <Link href="/docs">API &amp; docs</Link>
         <a
           href="https://github.com/mariusrueve/doi2bbt"
           rel="noreferrer"
@@ -32,7 +34,7 @@ export function SiteFooter() {
         <p>A small, open tool for researchers and their scripts.</p>
       </div>
       <div className="footer-links">
-        <a href="/docs">Docs</a>
+        <Link href="/docs">Docs</Link>
         <a href="/openapi.json">OpenAPI</a>
         <a href="mailto:contact@doi2bbt.org">Contact</a>
       </div>

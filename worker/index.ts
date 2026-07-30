@@ -1,5 +1,4 @@
 /** Cloudflare Worker entry point for doi2bbt. */
-import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import {
   generateCitationKey,
@@ -15,13 +14,6 @@ interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
   RATE_LIMIT_SECRET?: string;
-  IMAGES: {
-    input(stream: ReadableStream): {
-      transform(options: Record<string, unknown>): {
-        output(options: { format: string; quality: number }): Promise<{ response(): Response }>;
-      };
-    };
-  };
 }
 
 interface ExecutionContext {
@@ -189,26 +181,39 @@ async function doiForIdentifier(identifier: NormalizedIdentifier): Promise<strin
   }
 
   if (identifier.type === "pmcid") {
-    const url = new URL("https://pmc.ncbi.nlm.nih.gov/tools/id-converter-api/");
+    const url = new URL(
+      "https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/",
+    );
     url.search = new URLSearchParams({
-      ids: identifier.normalized.replace(/\.\d+$/, ""),
+      ids: identifier.normalized,
       format: "json",
+      versions: "yes",
+      showaiid: "yes",
       tool: "doi2bbt",
       email: NCBI_EMAIL,
     }).toString();
     const response = await fetchUpstream(url.toString());
     const payload = (await response.json()) as {
-      records?: Array<{ doi?: string; status?: string }>;
+      records?: Array<{
+        doi?: string;
+        status?: string;
+        error?: string;
+        versions?: Array<{ doi?: string; pmcid?: string }>;
+      }>;
     };
     const record = payload.records?.[0];
-    if (!record || record.status === "error") {
+    if (!record || record.status === "error" || record.error) {
       throw new HttpProblem(
         404,
         "Identifier not found",
         "No matching PMC record was found.",
       );
     }
-    return record.doi?.trim().toLowerCase() || noDoi("PMC");
+    const versionDoi = record.versions?.find(
+      (version) =>
+        version.pmcid?.toLowerCase() === identifier.normalized.toLowerCase(),
+    )?.doi;
+    return (versionDoi ?? record.doi)?.trim().toLowerCase() || noDoi("PMC");
   }
 
   const arxivId = identifier.normalized.replace(/v\d+$/i, "");
@@ -378,11 +383,22 @@ async function applyRateLimit(request: Request, env: Env): Promise<RateLimit> {
   const now = Date.now();
   const windowStart = Math.floor(now / WINDOW_MS) * WINDOW_MS;
   const reset = Math.floor((windowStart + WINDOW_MS) / 1000);
-  const hash = await clientHash(
-    request,
-    env.RATE_LIMIT_SECRET ?? "doi2bbt-local-development",
-    now,
-  );
+  const hostname = new URL(request.url).hostname;
+  const isLocal =
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1";
+  const secret =
+    env.RATE_LIMIT_SECRET ??
+    (isLocal ? "doi2bbt-local-development" : undefined);
+  if (!secret) {
+    throw new HttpProblem(
+      502,
+      "Quota service unavailable",
+      "The anonymous quota service is temporarily unavailable.",
+    );
+  }
+  const hash = await clientHash(request, secret, now);
   const row = await env.DB.prepare(
     `
       INSERT INTO rate_limits (client_hash, window_start, count, expires_at)
@@ -555,20 +571,14 @@ const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    if (url.hostname === "www.doi2bbt.org") {
+    if (
+      (url.hostname === "doi2bbt.org" ||
+        url.hostname === "www.doi2bbt.org") &&
+      (url.protocol !== "https:" || url.hostname === "www.doi2bbt.org")
+    ) {
+      url.protocol = "https:";
       url.hostname = "doi2bbt.org";
       return Response.redirect(url.toString(), 308);
-    }
-
-    if (url.pathname === "/_vinext/image") {
-      const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
-      return handleImageOptimization(request, {
-        fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
-        transformImage: async (body, { width, format, quality }) => {
-          const result = await env.IMAGES.input(body).transform(width > 0 ? { width } : {}).output({ format, quality });
-          return result.response();
-        },
-      }, allowedWidths);
     }
 
     if (url.pathname === "/healthz") {
