@@ -72,13 +72,13 @@ for (const [identifier, inputType] of [
   assert.ok(payload.citation_key);
 }
 
-const arxivWithoutDoi = await request(
+const canonicalArxiv = await expectOk(
   "/api/v1/resolve?id=1506.01497",
+  /^application\/json\b/i,
 );
-assert.equal(arxivWithoutDoi.status, 422);
-assert.match(
-  arxivWithoutDoi.headers.get("content-type") ?? "",
-  /^application\/problem\+json\b/i,
+assert.equal(
+  (await canonicalArxiv.json()).doi,
+  "10.48550/arxiv.1506.01497",
 );
 
 const bibtex = await request(

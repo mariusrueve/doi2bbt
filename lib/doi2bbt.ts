@@ -112,6 +112,15 @@ function validateModernArxiv(value: string): boolean {
   );
 }
 
+export function canonicalArxivDoi(value: string): string {
+  const normalized = value.trim().replace(/^arxiv\s*:\s*/i, "").toLowerCase();
+  const match = normalized.match(ARXIV_PATTERN);
+  if (!match || !validateModernArxiv(match[1])) {
+    throw new InputError("Use a modern arXiv identifier.");
+  }
+  return `10.48550/arxiv.${match[1].replace(/v\d+$/i, "")}`;
+}
+
 export class InputError extends Error {
   constructor(message: string) {
     super(message);

@@ -1,6 +1,7 @@
 /** Cloudflare Worker entry point for doi2bbt. */
 import handler from "vinext/server/app-router-entry";
 import {
+  canonicalArxivDoi,
   generateCitationKey,
   InputError,
   KEY_ALGORITHM,
@@ -231,7 +232,10 @@ async function doiForIdentifier(identifier: NormalizedIdentifier): Promise<strin
     );
   }
   const doi = xml.match(/<arxiv:doi[^>]*>\s*([^<]+?)\s*<\/arxiv:doi>/i)?.[1];
-  return doi?.replace(/&amp;/g, "&").trim().toLowerCase() || noDoi("arXiv");
+  return (
+    doi?.replace(/&amp;/g, "&").trim().toLowerCase() ??
+    canonicalArxivDoi(identifier.normalized)
+  );
 }
 
 async function resolveFresh(

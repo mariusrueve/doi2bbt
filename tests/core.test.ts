@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  canonicalArxivDoi,
   foldToAscii,
   generateCitationKey,
   InputError,
@@ -28,6 +29,18 @@ test("normalizes PubMed, PMC, and modern arXiv identifiers", () => {
     type: "arxiv",
     normalized: "1706.03762v7",
   });
+});
+
+test("constructs canonical DataCite DOIs for modern arXiv identifiers", () => {
+  assert.equal(
+    canonicalArxivDoi("1506.01497"),
+    "10.48550/arxiv.1506.01497",
+  );
+  assert.equal(
+    canonicalArxivDoi("arXiv:1706.03762v7"),
+    "10.48550/arxiv.1706.03762",
+  );
+  assert.throws(() => canonicalArxivDoi("0703.1234"), InputError);
 });
 
 test("rejects unsafe, unsupported, and legacy input", () => {

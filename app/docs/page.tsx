@@ -166,10 +166,11 @@ export default function DocsPage() {
               </p>
               <p>
                 Metadata comes from DOI content negotiation. PMID and PMCID
-                lookups use NCBI services; arXiv lookups use the arXiv API. This
-                service is not endorsed by or affiliated with DOI Foundation,
-                Crossref, DataCite, NCBI, arXiv, Zotero, Better BibTeX, or
-                doi2bib. Availability depends on those upstream services.
+                lookups use NCBI services; arXiv lookups use the arXiv API and
+                fall back to the record&apos;s canonical DataCite DOI. This service
+                is not endorsed by or affiliated with DOI Foundation, Crossref,
+                DataCite, NCBI, arXiv, Zotero, Better BibTeX, or doi2bib.
+                Availability depends on those upstream services.
               </p>
               <p>
                 The interaction is intentionally inspired by{" "}

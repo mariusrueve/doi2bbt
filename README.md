@@ -118,9 +118,9 @@ counters expire within 24 hours.
 - DOI content negotiation for CSL JSON and BibTeX
 - NCBI ESummary for PMID records
 - NCBI PMC ID Converter for PMCID records
-- arXiv Atom API for publication DOIs
+- arXiv Atom API for publication DOIs, with canonical DataCite DOI fallback
 
-Valid PMID, PMCID, or arXiv records without an associated DOI return HTTP 422.
+Valid PMID or PMCID records without an associated DOI return HTTP 422.
 
 ## License
 
