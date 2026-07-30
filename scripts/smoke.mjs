@@ -24,7 +24,16 @@ assert.deepEqual(await health.json(), {
 });
 
 const homepage = await expectOk("/", /^text\/html\b/i);
-assert.match(await homepage.text(), /Better citation keys/);
+const homepageHtml = await homepage.text();
+assert.match(homepageHtml, /Better citation keys/);
+assert.match(
+  homepageHtml,
+  /href="(?:https:\/\/doi2bbt\.org)?\/favicon\.svg"/,
+);
+
+await expectOk("/favicon.svg", /^image\/svg\+xml\b/i);
+await expectOk("/favicon-32x32.png", /^image\/png\b/i);
+await expectOk("/apple-touch-icon.png", /^image\/png\b/i);
 
 const docs = await expectOk("/docs", /^text\/html\b/i);
 assert.match(await docs.text(), /API/);

@@ -47,6 +47,8 @@ Run the test suite and production build:
 
 ```sh
 npm test
+npm run lint
+npm run typecheck
 npm run build
 npm run test:contract
 ```
@@ -94,10 +96,15 @@ project without an explicit cost review.
 
 ### Rollback
 
-Before changing production DNS, export the zone and retain the previous Sites
-A and CNAME records. If the Worker custom domains fail validation, remove those
-domains and restore the saved web records. Do not alter DNSSEC, registrar, or
-email-routing records during a rollback.
+List deployments and roll the Worker back to a known-good version:
+
+```sh
+npx wrangler deployments list
+npx wrangler rollback <version-id>
+```
+
+Worker rollback does not alter the D1 database. Schema changes therefore need
+an explicit backwards-compatibility and rollback plan.
 
 ## Privacy
 
@@ -118,3 +125,6 @@ Valid PMID, PMCID, or arXiv records without an associated DOI return HTTP 422.
 ## License
 
 [MIT](LICENSE)
+
+Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Please report
+security issues using the private process in [SECURITY.md](SECURITY.md).

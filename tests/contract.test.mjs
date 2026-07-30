@@ -29,6 +29,18 @@ test("server-renders the finished homepage", async () => {
   const html = await response.text();
   assert.match(html, /Better citation keys/);
   assert.match(html, /DOI, PMID, PMCID, or arXiv ID/);
+  assert.match(
+    html,
+    /href="(?:https:\/\/doi2bbt\.org)?\/favicon\.svg"/,
+  );
+  assert.match(
+    html,
+    /href="(?:https:\/\/doi2bbt\.org)?\/favicon-32x32\.png"/,
+  );
+  assert.match(
+    html,
+    /href="(?:https:\/\/doi2bbt\.org)?\/apple-touch-icon\.png"/,
+  );
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 
