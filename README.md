@@ -53,6 +53,18 @@ npm run build
 npm run test:contract
 ```
 
+## Contribution workflow
+
+`main` is the only long-lived branch and is protected. Create a short-lived
+topic branch for every change, open a pull request into `main`, and wait for the
+required `verify` job to pass. Pull requests are squash-merged, and merged topic
+branches are deleted automatically.
+
+The verification job installs dependencies, audits production packages, lints,
+type-checks, tests, builds, and performs a dry-run Worker deployment. A merge to
+`main` repeats verification, deploys the exact merged commit to production, and
+smoke-tests `https://doi2bbt.org`.
+
 ## Cloudflare deployment
 
 The production service runs directly in the project owner's Cloudflare account.
@@ -61,27 +73,44 @@ and a D1 binding named `DB` stores short-lived rate-limit counters. A
 `RATE_LIMIT_SECRET` runtime secret creates daily client-address hashes, and the
 Cloudflare Cache API caches resolved citations for 24 hours.
 
-Authenticate once, create the EU-jurisdiction database, and copy the returned
-database ID into `wrangler.jsonc`:
+GitHub Actions is the only automatic deployment controller. The repository's
+`production` environment is restricted to `main` and contains:
+
+- `CLOUDFLARE_API_TOKEN`, an environment secret created from Cloudflare's
+  **Edit Cloudflare Workers** token template and restricted to this account and
+  zone.
+- `CLOUDFLARE_ACCOUNT_ID`, an environment variable containing the account ID
+  from `wrangler.jsonc`.
+
+Do not also connect Cloudflare Workers Builds to the Git repository; doing so
+would create a second, independent production deployment path.
+
+For initial infrastructure setup, authenticate locally, create the
+EU-jurisdiction database, and copy the returned database ID into
+`wrangler.jsonc`:
 
 ```sh
 npx wrangler login
 npx wrangler d1 create doi2bbt-d1 --jurisdiction=eu
 ```
 
-Apply the schema and set a randomly generated secret without committing it:
+D1 migrations are intentionally not part of automatic deployment. Review and
+apply schema changes manually, then set runtime secrets directly in Cloudflare
+without committing them:
 
 ```sh
 npm run db:migrate:remote
 openssl rand -hex 32 | npx wrangler secret put RATE_LIMIT_SECRET
 ```
 
-Validate and deploy:
+The normal production path is a pull request merged into `main`. For an
+operational fallback, validate and deploy manually from a clean, verified
+`main` checkout:
 
 ```sh
 npm run deploy:check
 npm run deploy
-DOI2BBT_BASE_URL=https://doi2bbt.<account-subdomain>.workers.dev npm run smoke
+DOI2BBT_BASE_URL=https://doi2bbt.org npm run smoke
 ```
 
 `wrangler.jsonc` is the source of truth for bindings, observability, and custom
