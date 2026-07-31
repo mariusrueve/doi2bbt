@@ -36,6 +36,7 @@
     "db:migrate:remote": "WRANGLER_LOG_PATH=.wrangler/wrangler.log WRANGLER_WRITE_LOGS=false WRANGLER_SEND_METRICS=false wrangler d1 migrations apply doi2bbt-d1 --remote",
     "deploy:check": "npm run build && WRANGLER_LOG_PATH=.wrangler/wrangler.log WRANGLER_WRITE_LOGS=false WRANGLER_SEND_METRICS=false wrangler deploy --dry-run --outdir .wrangler/dry-run",
     "deploy": "npm run build && WRANGLER_LOG_PATH=.wrangler/wrangler.log WRANGLER_WRITE_LOGS=false WRANGLER_SEND_METRICS=false wrangler deploy",
+    "deploy:cloudflare": "WRANGLER_LOG_PATH=.wrangler/wrangler.log WRANGLER_WRITE_LOGS=false WRANGLER_SEND_METRICS=false wrangler deploy --message \"Workers Builds ${WORKERS_CI_COMMIT_SHA:-manual}\" && DOI2BBT_BASE_URL=https://doi2bbt.org npm run smoke",
     "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {

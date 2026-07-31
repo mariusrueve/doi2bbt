@@ -61,9 +61,12 @@ required `verify` job to pass. Pull requests are squash-merged, and merged topic
 branches are deleted automatically.
 
 The verification job installs dependencies, audits production packages, lints,
-type-checks, tests, builds, and performs a dry-run Worker deployment. A merge to
-`main` repeats verification, deploys the exact merged commit to production, and
-smoke-tests `https://doi2bbt.org`.
+type-checks, tests, builds, and performs a dry-run Worker deployment. GitHub
+Actions never receives Cloudflare credentials and cannot deploy production.
+
+After a compliant pull request is merged, Cloudflare Workers Builds checks out
+the exact `main` commit, builds it, deploys it, records the commit SHA in the
+deployment message, and smoke-tests `https://doi2bbt.org`.
 
 ## Cloudflare deployment
 
@@ -73,17 +76,27 @@ and a D1 binding named `DB` stores short-lived rate-limit counters. A
 `RATE_LIMIT_SECRET` runtime secret creates daily client-address hashes, and the
 Cloudflare Cache API caches resolved citations for 24 hours.
 
-GitHub Actions is the only automatic deployment controller. The repository's
-`production` environment is restricted to `main` and contains:
+Cloudflare Workers Builds is the only automatic deployment controller. Its
+**Cloudflare Workers and Pages** GitHub App installation is restricted to the
+`mariusrueve/doi2bbt` repository. Production branch control is set to `main`,
+and builds for non-production branches are disabled so unmerged code never runs
+with Cloudflare deployment access.
 
-- `CLOUDFLARE_API_TOKEN`, an environment secret created from Cloudflare's
-  **Edit Cloudflare Workers** token template and restricted to this account and
-  zone.
-- `CLOUDFLARE_ACCOUNT_ID`, an environment variable containing the account ID
-  from `wrangler.jsonc`.
+The Workers Builds configuration is:
 
-Do not also connect Cloudflare Workers Builds to the Git repository; doing so
-would create a second, independent production deployment path.
+- Build command: `npm run build`
+- Deploy command: `npm run deploy:cloudflare`
+- Root directory: repository root
+- Production branch: `main`
+- Non-production branch builds: disabled
+
+Cloudflare manages the build credential inside the Cloudflare account; no
+Cloudflare token, account ID, deploy hook, or deployment secret is stored in
+GitHub. The deploy command uses Cloudflare's `WORKERS_CI_COMMIT_SHA` variable in
+the deployment message and runs the production smoke suite after `wrangler
+deploy`. If deployment fails, the previous active version remains. If a
+post-deployment smoke check fails, the build is marked failed and rollback
+remains a manual decision.
 
 For initial infrastructure setup, authenticate locally, create the
 EU-jurisdiction database, and copy the returned database ID into
@@ -103,9 +116,10 @@ npm run db:migrate:remote
 openssl rand -hex 32 | npx wrangler secret put RATE_LIMIT_SECRET
 ```
 
-The normal production path is a pull request merged into `main`. For an
-operational fallback, validate and deploy manually from a clean, verified
-`main` checkout:
+The normal production path is a pull request merged into `main`; the push
+automatically triggers Workers Builds. Build status is visible in Cloudflare's
+deployment history and as a check on the GitHub commit. For an operational
+fallback, validate and deploy manually from a clean, verified `main` checkout:
 
 ```sh
 npm run deploy:check
