@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   canonicalArxivDoi,
   foldToAscii,
+  formatBibtex,
   generateCitationKey,
   InputError,
   normalizeIdentifier,
@@ -116,4 +117,41 @@ test("replaces only the leading BibTeX entry key", () => {
   assert.match(replaced, /mentioning old-key/);
   assert.match(replaced, /note = \{old-key\}/);
   assert.throws(() => replaceBibtexKey("not bibtex", "safeKey"));
+});
+
+test("formats compact BibTeX as an indented multiline entry", () => {
+  const source =
+    "@article{maimanStimulatedOpticalRadiation1960, title={Stimulated Optical Radiation in Ruby}, volume={187}, ISSN={1476-4687}, url={http://dx.doi.org/10.1038/187493a0}, DOI={10.1038/187493a0}, number={4736}, journal={Nature}, publisher={Springer Science and Business Media LLC}, author={MAIMAN, T. H.}, year={1960}, month=Aug, pages={493–494} }";
+
+  assert.equal(
+    formatBibtex(source),
+    `@article{maimanStimulatedOpticalRadiation1960,
+  title = {Stimulated Optical Radiation in Ruby},
+  volume = {187},
+  ISSN = {1476-4687},
+  url = {http://dx.doi.org/10.1038/187493a0},
+  DOI = {10.1038/187493a0},
+  number = {4736},
+  journal = {Nature},
+  publisher = {Springer Science and Business Media LLC},
+  author = {MAIMAN, T. H.},
+  year = {1960},
+  month = Aug,
+  pages = {493–494}
+}`,
+  );
+});
+
+test("preserves commas inside braced and quoted BibTeX values", () => {
+  assert.equal(
+    formatBibtex(
+      '@article(old, title="One, {Two}", author={Doe, Jane}, month=jan,)',
+    ),
+    `@article(old,
+  title = "One, {Two}",
+  author = {Doe, Jane},
+  month = jan
+)`,
+  );
+  assert.throws(() => formatBibtex("@article{broken, title={Missing brace}"));
 });

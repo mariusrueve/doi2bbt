@@ -277,3 +277,99 @@ export function replaceBibtexKey(bibtex: string, key: string): string {
   }
   return bibtex.replace(entry, `$1${safeKey}$3`).trim();
 }
+
+export function formatBibtex(bibtex: string): string {
+  const source = bibtex.trim().replace(/^\uFEFF/, "");
+  const header = source.match(/^@([A-Za-z][A-Za-z0-9_-]*)\s*([\{\(])/);
+  if (!header) {
+    throw new Error("The upstream BibTeX entry could not be parsed.");
+  }
+
+  const entryType = header[1];
+  const opening = header[2];
+  const closing = opening === "{" ? "}" : ")";
+  const parts: string[] = [];
+  let partStart = header[0].length;
+  let outerDepth = 1;
+  let braceDepth = 0;
+  let quoted = false;
+  let closingIndex = -1;
+
+  for (let index = partStart; index < source.length; index += 1) {
+    const character = source[index];
+
+    if (character === "\\") {
+      index += 1;
+      continue;
+    }
+
+    if (opening === "{") {
+      if (character === '"' && outerDepth === 1) {
+        quoted = !quoted;
+      } else if (character === "{") {
+        outerDepth += 1;
+      } else if (character === "}" && !(quoted && outerDepth === 1)) {
+        outerDepth -= 1;
+        if (outerDepth === 0) {
+          parts.push(source.slice(partStart, index));
+          closingIndex = index;
+          break;
+        }
+      } else if (character === "," && outerDepth === 1 && !quoted) {
+        parts.push(source.slice(partStart, index));
+        partStart = index + 1;
+      }
+    } else {
+      if (character === '"' && outerDepth === 1 && braceDepth === 0) {
+        quoted = !quoted;
+      } else if (character === "{") {
+        braceDepth += 1;
+      } else if (character === "}" && braceDepth > 0) {
+        braceDepth -= 1;
+      } else if (braceDepth === 0 && !quoted) {
+        if (character === "(") {
+          outerDepth += 1;
+        } else if (character === ")") {
+          outerDepth -= 1;
+          if (outerDepth === 0) {
+            parts.push(source.slice(partStart, index));
+            closingIndex = index;
+            break;
+          }
+        } else if (character === "," && outerDepth === 1) {
+          parts.push(source.slice(partStart, index));
+          partStart = index + 1;
+        }
+      }
+    }
+  }
+
+  if (
+    closingIndex < 0 ||
+    braceDepth !== 0 ||
+    quoted ||
+    source.slice(closingIndex + 1).trim()
+  ) {
+    throw new Error("The upstream BibTeX entry could not be parsed.");
+  }
+
+  while (parts.at(-1)?.trim() === "") parts.pop();
+  const key = parts.shift()?.trim();
+  if (!key || /[\s,]/.test(key)) {
+    throw new Error("The upstream BibTeX entry could not be parsed.");
+  }
+
+  const fields = parts.map((part) => {
+    const field = part
+      .trim()
+      .match(/^([A-Za-z][A-Za-z0-9_:-]*)\s*=\s*([\s\S]+)$/);
+    if (!field) {
+      throw new Error("The upstream BibTeX entry could not be parsed.");
+    }
+    return `  ${field[1]} = ${field[2].trim()}`;
+  });
+
+  return fields.length
+    ? `@${entryType}${opening}${key},\n${fields.join(",\n")}\n${closing}`
+    : `@${entryType}${opening}${key}${closing}`;
+}

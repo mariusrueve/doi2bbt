@@ -2,6 +2,7 @@
 import handler from "vinext/server/app-router-entry";
 import {
   canonicalArxivDoi,
+  formatBibtex,
   generateCitationKey,
   InputError,
   KEY_ALGORITHM,
@@ -43,6 +44,7 @@ type RateLimit = {
 const QUOTA = 100;
 const WINDOW_MS = 15 * 60 * 1000;
 const CACHE_SECONDS = 24 * 60 * 60;
+const CACHE_VERSION = "v2";
 const NCBI_EMAIL = "contact@doi2bbt.org";
 const UPSTREAM_TIMEOUT_MS = 12_000;
 
@@ -266,7 +268,7 @@ async function resolveFresh(
   const citationKey = generateCitationKey(record, doi);
   let bibtex: string;
   try {
-    bibtex = replaceBibtexKey(upstreamBibtex, citationKey);
+    bibtex = formatBibtex(replaceBibtexKey(upstreamBibtex, citationKey));
   } catch {
     throw new HttpProblem(
       502,
@@ -293,7 +295,7 @@ async function cachedResolve(
   ctx: ExecutionContext,
 ): Promise<ResolvePayload> {
   const cacheUrl = new URL(request.url);
-  cacheUrl.pathname = `/__doi2bbt-cache/${identifier.type}/${encodeURIComponent(identifier.normalized)}`;
+  cacheUrl.pathname = `/__doi2bbt-cache/${CACHE_VERSION}/${identifier.type}/${encodeURIComponent(identifier.normalized)}`;
   cacheUrl.search = "";
   const cacheKey = new Request(cacheUrl.toString(), { method: "GET" });
   try {
