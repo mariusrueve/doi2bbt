@@ -23,12 +23,15 @@ citation = response.json()
 print(citation["citation_key"])
 print(citation["bibtex"])`;
 
-const agentExample = `GET https://doi2bbt.org/api/v1/resolve?id={url_encoded_identifier}
+const agentExample = `GET https://doi2bbt.org/api/v1/resolve?id={url_encoded_identifier}&taken={existing_keys}
 Accept: application/json
 
 Use citation_key when citing the work.
 Use bibtex when updating a .bib file.
-If status is 422, report that the record has no associated DOI.`;
+POST [zotero_item] to the Zotero web API to add the work with that key.
+If status is 422, report that the record has no associated DOI.
+
+Agent skill: https://doi2bbt.org/skills/doi2bbt/SKILL.md`;
 
 export default function DocsPage() {
   return (
@@ -61,7 +64,7 @@ export default function DocsPage() {
               <div className="endpoint">
                 <div>
                   <span className="method">GET</span>
-                  <code>/api/v1/bibtex?id=…</code>
+                  <code>/api/v1/bibtex?id=…&amp;taken=…</code>
                 </div>
                 <p>
                   Raw BibTeX as{" "}
@@ -71,13 +74,21 @@ export default function DocsPage() {
               <div className="endpoint">
                 <div>
                   <span className="method">GET</span>
-                  <code>/api/v1/resolve?id=…</code>
+                  <code>/api/v1/resolve?id=…&amp;taken=…</code>
                 </div>
                 <p>
                   Structured JSON with the normalized input, DOI, citation key,
-                  BibTeX, source URL, and algorithm version.
+                  BibTeX, a ready-to-post Zotero item, source URL, and algorithm
+                  version.
                 </p>
               </div>
+              <p>
+                The optional <code>taken</code> parameter lists citation keys
+                already in your library (comma-separated or repeated, up to
+                500). When the generated key is taken, doi2bbt appends Better
+                BibTeX’s postfix: <code>a</code>, <code>b</code>, … The
+                unsuffixed key is always returned as <code>base_key</code>.
+              </p>
               <p>
                 Both endpoints also support <code>HEAD</code> and CORS{" "}
                 <code>OPTIONS</code>. See the machine-readable{" "}
@@ -104,23 +115,28 @@ export default function DocsPage() {
             <section id="algorithm">
               <h2>Citation keys</h2>
               <p>
-                Version <code>bbt-default-v1</code> freezes the Better BibTeX
-                default base formula at{" "}
-                <code>auth.lower + shorttitle(3,3) + year</code>. It uses the
-                first author’s family name (or editor fallback), the first three
-                significant title words, and the publication year.
+                Version <code>bbt-default-v2</code> ports Better BibTeX
+                9.0.77’s default formula,{" "}
+                <code>auth.lower + shorttitle(3,3) + year</code>, with its
+                default preferences. It uses the same title tokenizer,
+                transliteration, and stop-word list, and builds the Zotero item
+                the way Zotero’s translators do: Crossref’s print date first,
+                and the latest-version date for arXiv preprints.
               </p>
               <div className="formula-example">
                 <span>Vaswani · “Attention Is All You Need” · 2017</span>
                 <strong>vaswaniAttentionAllYou2017</strong>
               </div>
               <p>
-                Diacritics and many Greek/Cyrillic characters are folded to
-                ASCII on a best-effort basis. doi2bbt has no library context, so
-                it does not add collision suffixes such as <code>a</code> or{" "}
-                <code>b</code>. Two records can therefore produce the same base
-                key. Metadata corrections upstream may change a key after the
-                24-hour cache expires.
+                Keys can still differ from Better BibTeX when Zotero stores
+                different metadata than the DOI registry, for example after a
+                save from a publisher page or a manual edit. Language-specific
+                modes other than German, and the optional Chinese and Japanese
+                segmentation, are not ported. To guarantee a key, create the
+                Zotero item from <code>zotero_item</code>: Better BibTeX keeps a
+                citation key that is set when an item is created. Metadata
+                corrections upstream may change a key after the 24-hour cache
+                expires.
               </p>
               <p>
                 doi2bbt changes only the entry key of DOI-provided BibTeX. It is

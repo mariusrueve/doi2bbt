@@ -83,4 +83,29 @@ test("serves health, OpenAPI, CORS, and problem details", async () => {
     invalid.headers.get("content-type") ?? "",
     /^application\/problem\+json/,
   );
+  const tooManyTaken = await worker.fetch(
+    new Request(
+      `http://localhost/api/v1/resolve?id=10.1038%2F187493a0&taken=${Array.from(
+        { length: 501 },
+        (_, index) => `key${index}`,
+      ).join(",")}`,
+    ),
+    assetEnv(),
+    context,
+  );
+  assert.equal(tooManyTaken.status, 400);
+});
+
+test("documents the taken parameter and Zotero item in OpenAPI", async () => {
+  const spec = await (
+    await worker.fetch(
+      new Request("http://localhost/openapi.json"),
+      assetEnv(),
+      context,
+    )
+  ).json();
+  assert.equal(spec.components.parameters.Taken.name, "taken");
+  assert.ok(
+    spec.components.schemas.ResolvedCitation.required.includes("zotero_item"),
+  );
 });

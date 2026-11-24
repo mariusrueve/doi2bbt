@@ -1,15 +1,24 @@
 # doi2bbt
 
-Turn a DOI, PMID, PMCID, or modern arXiv identifier into BibTeX with a
-Better BibTeX-style citation key.
+Turn a DOI, PMID, PMCID, or modern arXiv identifier into BibTeX with the
+citation key Better BibTeX would generate.
 
 doi2bbt is a focused, open-source, no-account webpage and API. It is inspired
-by [doi2bib](https://www.doi2bib.org) and independently implements a frozen
-version of Better BibTeX's documented default base-key formula:
+by [doi2bib](https://www.doi2bib.org) and ports Better BibTeX 9.0.77's default
+key formula with its default preferences:
 
 ```text
 auth.lower + shorttitle(3,3) + year
 ```
+
+The port in [`lib/citekey.ts`](lib/citekey.ts) follows Better BibTeX's
+`formatter.ts` and uses the same tokenizer, transliteration, and ASCII-folding
+packages. [`lib/zotero-item.ts`](lib/zotero-item.ts) builds the Zotero item the
+way Zotero's translators do (Crossref REST for Crossref DOIs, the arXiv API for
+preprints), because Better BibTeX computes keys from the Zotero item.
+[`tests/fixtures/bbt-library.json`](tests/fixtures/bbt-library.json) holds keys
+that Better BibTeX generated in a real library; the tests must reproduce all of
+them.
 
 It is not affiliated with doi2bib, Zotero, or Better BibTeX, and it is not a
 replacement for Better BibTeX's full Zotero exporter.
@@ -30,9 +39,32 @@ curl --get 'https://doi2bbt.org/api/v1/resolve' \
   --data-urlencode 'id=10.1038/187493a0'
 ```
 
+Pass existing library keys as `taken` (comma-separated or repeated, up to 500)
+to get Better BibTeX's collision postfix (`a`, `b`, …). The JSON response also
+contains `base_key` and `zotero_item`, Zotero web API item JSON with
+`citationKey` set. Better BibTeX keeps a key that is set when the item is
+created, so posting `zotero_item` pins the key in the user's library.
+
 The API supports `GET`, `HEAD`, and CORS `OPTIONS` without authentication.
 Anonymous use is limited to 100 conversions per client every 15 minutes.
 See [`/openapi.json`](https://doi2bbt.org/openapi.json) for the full contract.
+
+## Agent skill
+
+[`public/skills/doi2bbt/SKILL.md`](public/skills/doi2bbt/SKILL.md) is served at
+<https://doi2bbt.org/skills/doi2bbt/SKILL.md> with its helper script
+`scripts/zotero_cite.py`. Given an identifier and Zotero web API credentials,
+the script returns the key of an existing item, or creates the item with its
+key pinned and returns that key.
+
+## Key parity
+
+To compare keys with a real library, export it from Zotero as Better BibLaTeX
+and run:
+
+```sh
+npm run parity -- library.bib [base-url]
+```
 
 ## Development
 
