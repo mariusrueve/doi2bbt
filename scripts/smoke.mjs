@@ -52,10 +52,27 @@ const resolve = await expectOk(
   /^application\/json\b/i,
 );
 assert.equal(resolve.headers.get("access-control-allow-origin"), "*");
+const resolved = await resolve.json();
+assert.equal(resolved.citation_key, "maimanStimulatedOpticalRadiation1960");
 assert.equal(
-  (await resolve.json()).citation_key,
+  resolved.zotero_item.citationKey,
   "maimanStimulatedOpticalRadiation1960",
 );
+
+const taken = await expectOk(
+  "/api/v1/resolve?id=10.1038%2F187493a0&taken=maimanStimulatedOpticalRadiation1960",
+  /^application\/json\b/i,
+);
+const suffixed = await taken.json();
+assert.equal(suffixed.citation_key, "maimanStimulatedOpticalRadiation1960a");
+assert.equal(suffixed.base_key, "maimanStimulatedOpticalRadiation1960");
+assert.match(suffixed.bibtex, /^@article\{maimanStimulatedOpticalRadiation1960a,/);
+
+const skill = await expectOk("/skills/doi2bbt/SKILL.md", /^text\/(markdown|plain)\b/i);
+assert.match(await skill.text(), /^---\nname: doi2bbt\n/);
+const skillScript = await request("/skills/doi2bbt/scripts/zotero_cite.py");
+assert.equal(skillScript.status, 200);
+assert.match(await skillScript.text(), /^#!\/usr\/bin\/env python3\n/);
 
 for (const [identifier, inputType] of [
   ["14420193", "pmid"],

@@ -8,12 +8,15 @@ type ResolveResult = {
   normalized_id: string;
   doi: string;
   citation_key: string;
+  base_key: string;
   bibtex: string;
+  zotero_item: Record<string, unknown>;
   source_url: string;
   key_algorithm: {
     id: string;
     formula: string;
-    collision_suffixes: boolean;
+    better_bibtex_version: string;
+    collision_suffixes: string;
   };
 };
 

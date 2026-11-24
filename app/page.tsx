@@ -52,8 +52,8 @@ export default function Home() {
               for the citation, then replaces only the BibTeX entry key.
             </p>
             <p>
-              The key follows a frozen version of Better BibTeX’s default:
-              first author, three significant title words, and year.
+              The key follows Better BibTeX 9.0.77’s default formula: first
+              author, three significant title words, and year.
             </p>
             <a className="text-link" href="/docs">
               Read the API and algorithm notes <span aria-hidden="true">→</span>

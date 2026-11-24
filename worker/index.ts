@@ -1,16 +1,28 @@
 /** Cloudflare Worker entry point for doi2bbt. */
 import handler from "vinext/server/app-router-entry";
 import {
+  disambiguateKey,
+  generateCitationKey,
+  KEY_ALGORITHM,
+  type ZoteroItem,
+} from "../lib/citekey";
+import {
   canonicalArxivDoi,
   formatBibtex,
-  generateCitationKey,
   InputError,
-  KEY_ALGORITHM,
   normalizeIdentifier,
   replaceBibtexKey,
-  type CslRecord,
   type NormalizedIdentifier,
 } from "../lib/doi2bbt";
+import {
+  itemFromArxiv,
+  itemFromCrossref,
+  itemFromCsl,
+  parseArxivAtom,
+  type ArxivEntry,
+  type CrossrefWork,
+  type CslRecord,
+} from "../lib/zotero-item";
 
 interface Env {
   ASSETS: Fetcher;
@@ -29,10 +41,14 @@ type ResolvePayload = {
   normalized_id: string;
   doi: string;
   citation_key: string;
+  base_key: string;
   bibtex: string;
+  zotero_item: ZoteroItem;
   source_url: string;
   key_algorithm: typeof KEY_ALGORITHM;
 };
+
+const MAX_TAKEN_KEYS = 500;
 
 type RateLimit = {
   limit: number;
@@ -44,7 +60,7 @@ type RateLimit = {
 const QUOTA = 100;
 const WINDOW_MS = 15 * 60 * 1000;
 const CACHE_SECONDS = 24 * 60 * 60;
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const NCBI_EMAIL = "contact@doi2bbt.org";
 const UPSTREAM_TIMEOUT_MS = 12_000;
 
@@ -219,44 +235,69 @@ async function doiForIdentifier(identifier: NormalizedIdentifier): Promise<strin
     return (versionDoi ?? record.doi)?.trim().toLowerCase() || noDoi("PMC");
   }
 
-  const arxivId = identifier.normalized.replace(/v\d+$/i, "");
+  throw new Error("arXiv identifiers are resolved by resolveFresh.");
+}
+
+async function fetchArxiv(id: string): Promise<ArxivEntry> {
   const url = new URL("https://export.arxiv.org/api/query");
-  url.searchParams.set("id_list", arxivId);
+  url.searchParams.set("id_list", id.replace(/v\d+$/i, ""));
   const response = await fetchUpstream(url.toString(), {
     headers: { Accept: "application/atom+xml" },
   });
   const xml = await response.text();
-  if (/<opensearch:totalResults[^>]*>\s*0\s*</i.test(xml)) {
+  const entry = /<opensearch:totalResults[^>]*>\s*0\s*</i.test(xml)
+    ? undefined
+    : parseArxivAtom(xml);
+  if (!entry) {
     throw new HttpProblem(
       404,
       "Identifier not found",
       "No matching arXiv record was found.",
     );
   }
-  const doi = xml.match(/<arxiv:doi[^>]*>\s*([^<]+?)\s*<\/arxiv:doi>/i)?.[1];
-  return (
-    doi?.replace(/&amp;/g, "&").trim().toLowerCase() ??
-    canonicalArxivDoi(identifier.normalized)
-  );
+  return entry;
 }
 
-async function resolveFresh(
-  identifier: NormalizedIdentifier,
-): Promise<ResolvePayload> {
-  const doi = await doiForIdentifier(identifier);
-  const doiUrl = `https://doi.org/${encodeDoi(doi)}`;
-  const [cslResponse, bibtexResponse] = await Promise.all([
-    fetchUpstream(doiUrl, {
-      headers: { Accept: "application/vnd.citationstyles.csl+json" },
-    }),
-    fetchUpstream(doiUrl, {
-      headers: { Accept: "application/x-bibtex" },
-    }),
-  ]);
+const ARXIV_DOI = /^10\.48550\/arxiv\.(.+)$/i;
 
-  let record: CslRecord;
+/**
+ * Builds the Zotero item the way Zotero's translators would: arXiv preprints
+ * from the arXiv API, Crossref DOIs from the Crossref REST API, anything else
+ * from doi.org CSL JSON.
+ */
+async function zoteroItemFor(
+  doi: string,
+  arxiv?: ArxivEntry,
+): Promise<ZoteroItem> {
+  // An arXiv ID with a published DOI resolves as that publication.
+  if (arxiv && !arxiv.doi) return itemFromArxiv(arxiv);
+  const arxivId = doi.match(ARXIV_DOI)?.[1];
+  if (arxivId) {
+    try {
+      return itemFromArxiv(await fetchArxiv(arxivId));
+    } catch {
+      // Fall back to the DataCite record below.
+    }
+  }
+
+  if (!ARXIV_DOI.test(doi)) {
+    try {
+      const response = await fetchUpstream(
+        `https://api.crossref.org/works/${encodeDoi(doi)}`,
+        { headers: { Accept: "application/json" } },
+      );
+      const payload = (await response.json()) as { message?: CrossrefWork };
+      if (payload.message) return itemFromCrossref(payload.message);
+    } catch {
+      // Not a Crossref DOI, or Crossref is unavailable: use doi.org CSL JSON.
+    }
+  }
+
+  const response = await fetchUpstream(`https://doi.org/${encodeDoi(doi)}`, {
+    headers: { Accept: "application/vnd.citationstyles.csl+json" },
+  });
   try {
-    record = (await cslResponse.json()) as CslRecord;
+    return itemFromCsl((await response.json()) as CslRecord);
   } catch {
     throw new HttpProblem(
       502,
@@ -264,8 +305,27 @@ async function resolveFresh(
       "The DOI provider returned metadata that could not be read.",
     );
   }
-  const upstreamBibtex = await bibtexResponse.text();
-  const citationKey = generateCitationKey(record, doi);
+}
+
+async function resolveFresh(
+  identifier: NormalizedIdentifier,
+): Promise<ResolvePayload> {
+  const arxiv =
+    identifier.type === "arxiv"
+      ? await fetchArxiv(identifier.normalized)
+      : undefined;
+  const doi = arxiv
+    ? (arxiv.doi?.trim().toLowerCase() ?? canonicalArxivDoi(identifier.normalized))
+    : await doiForIdentifier(identifier);
+  const doiUrl = `https://doi.org/${encodeDoi(doi)}`;
+  const [item, upstreamBibtex] = await Promise.all([
+    zoteroItemFor(doi, arxiv),
+    fetchUpstream(doiUrl, {
+      headers: { Accept: "application/x-bibtex" },
+    }).then((response) => response.text()),
+  ]);
+
+  const citationKey = generateCitationKey(item, doi);
   let bibtex: string;
   try {
     bibtex = formatBibtex(replaceBibtexKey(upstreamBibtex, citationKey));
@@ -283,9 +343,38 @@ async function resolveFresh(
     normalized_id: identifier.normalized,
     doi,
     citation_key: citationKey,
+    base_key: citationKey,
     bibtex,
-    source_url: `https://doi.org/${encodeDoi(doi)}`,
+    zotero_item: { ...item, citationKey },
+    source_url: doiUrl,
     key_algorithm: KEY_ALGORITHM,
+  };
+}
+
+function parseTaken(url: URL): string[] {
+  const keys = url.searchParams
+    .getAll("taken")
+    .flatMap((value) => value.split(","))
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (keys.length > MAX_TAKEN_KEYS || keys.some((key) => key.length > 200)) {
+    throw new InputError(
+      `Pass at most ${MAX_TAKEN_KEYS} taken keys of up to 200 characters each.`,
+    );
+  }
+  return keys;
+}
+
+/** Adds Better BibTeX's collision postfix when the base key is taken. */
+function withTakenKeys(payload: ResolvePayload, taken: string[]): ResolvePayload {
+  if (!taken.length) return payload;
+  const key = disambiguateKey(payload.base_key, taken);
+  if (key === payload.citation_key) return payload;
+  return {
+    ...payload,
+    citation_key: key,
+    bibtex: replaceBibtexKey(payload.bibtex, key),
+    zotero_item: { ...payload.zotero_item, citationKey: key },
   };
 }
 
@@ -445,9 +534,9 @@ const openApi = {
   openapi: "3.1.0",
   info: {
     title: "doi2bbt API",
-    version: "1.0.0",
+    version: "1.1.0",
     description:
-      "Resolve DOI, PMID, PMCID, and modern arXiv identifiers to BibTeX with a frozen Better BibTeX-style base key.",
+      "Resolve DOI, PMID, PMCID, and modern arXiv identifiers to BibTeX, a Zotero item, and the citation key Better BibTeX 9.0.77 would generate with its default formula.",
     license: {
       name: "MIT",
       identifier: "MIT",
@@ -460,12 +549,8 @@ const openApi = {
         summary: "Resolve an identifier to structured citation data",
         operationId: "resolveCitation",
         parameters: [
-          {
-            name: "id",
-            in: "query",
-            required: true,
-            schema: { type: "string", maxLength: 512 },
-          },
+          { $ref: "#/components/parameters/Id" },
+          { $ref: "#/components/parameters/Taken" },
         ],
         responses: {
           "200": {
@@ -490,12 +575,8 @@ const openApi = {
         summary: "Resolve an identifier to raw BibTeX",
         operationId: "resolveBibtex",
         parameters: [
-          {
-            name: "id",
-            in: "query",
-            required: true,
-            schema: { type: "string", maxLength: 512 },
-          },
+          { $ref: "#/components/parameters/Id" },
+          { $ref: "#/components/parameters/Taken" },
         ],
         responses: {
           "200": {
@@ -515,6 +596,24 @@ const openApi = {
     },
   },
   components: {
+    parameters: {
+      Id: {
+        name: "id",
+        in: "query",
+        required: true,
+        schema: { type: "string", maxLength: 512 },
+      },
+      Taken: {
+        name: "taken",
+        in: "query",
+        required: false,
+        description:
+          "Citation keys already in the library (comma-separated or repeated, at most 500). Only keys that start with base_key matter.",
+        schema: { type: "string" },
+        style: "form",
+        explode: true,
+      },
+    },
     schemas: {
       ResolvedCitation: {
         type: "object",
@@ -524,7 +623,9 @@ const openApi = {
           "normalized_id",
           "doi",
           "citation_key",
+          "base_key",
           "bibtex",
+          "zotero_item",
           "source_url",
           "key_algorithm",
         ],
@@ -533,17 +634,33 @@ const openApi = {
           input_type: { enum: ["doi", "pmid", "pmcid", "arxiv"] },
           normalized_id: { type: "string" },
           doi: { type: "string" },
-          citation_key: { type: "string" },
+          citation_key: {
+            type: "string",
+            description:
+              "The key to use: base_key plus a Better BibTeX postfix (a, b, …) when base_key is in `taken`.",
+          },
+          base_key: {
+            type: "string",
+            description: "The key before collision handling.",
+          },
           bibtex: { type: "string" },
+          zotero_item: {
+            type: "object",
+            description:
+              "Zotero web API item JSON with citationKey set. POST it as a one-element array to /users/{id}/items so Better BibTeX keeps the key.",
+            required: ["itemType", "title", "creators", "citationKey"],
+            additionalProperties: true,
+          },
           source_url: { type: "string", format: "uri" },
           key_algorithm: {
             type: "object",
             properties: {
-              id: { const: "bbt-default-v1" },
+              id: { const: "bbt-default-v2" },
               formula: {
                 const: "auth.lower + shorttitle(3,3) + year",
               },
-              collision_suffixes: { const: false },
+              better_bibtex_version: { type: "string" },
+              collision_suffixes: { const: "with-taken" },
             },
           },
         },
@@ -637,6 +754,7 @@ const worker = {
       try {
         const rawIdentifier = url.searchParams.get("id") ?? "";
         const identifier = normalizeIdentifier(rawIdentifier);
+        const taken = parseTaken(url);
         const rate = await applyRateLimit(request, env);
         if (!rate.allowed) {
           const response = problemResponse(
@@ -654,7 +772,10 @@ const worker = {
           return response;
         }
 
-        const payload = await cachedResolve(request, identifier, ctx);
+        const payload = withTakenKeys(
+          await cachedResolve(request, identifier, ctx),
+          taken,
+        );
         const body = isBibtex ? payload.bibtex : JSON.stringify(payload, null, 2);
         return new Response(request.method === "HEAD" ? null : body, {
           status: 200,

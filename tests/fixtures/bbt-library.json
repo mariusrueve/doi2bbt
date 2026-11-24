@@ -1,0 +1,438 @@
+[
+  {
+    "expected": "barsainyanDeepChemDELOpenSourceFramework2026",
+    "item": {
+      "itemType": "journalArticle",
+      "title": "DeepChem-DEL: An Open-Source Framework for Reproducible DEL Modeling and Benchmarking",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "Aryan Amit",
+          "lastName": "Barsainyan"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Riya",
+          "lastName": "Singh"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Abhiraj Pravin",
+          "lastName": "Mengade"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Rida",
+          "lastName": "Irfan"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Bharath",
+          "lastName": "Ramsundar"
+        }
+      ],
+      "date": "2026-11-19"
+    },
+    "DOI": "10.1021/acs.jcim.6c02673"
+  },
+  {
+    "expected": "belcakYouDontNeed2026",
+    "item": {
+      "itemType": "preprint",
+      "title": "You don't need long context",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "Peter",
+          "lastName": "Belcak"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Saurav",
+          "lastName": "Muralidharan"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Jindong",
+          "lastName": "Jiang"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Yonggan",
+          "lastName": "Fu"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Wonmin",
+          "lastName": "Byeon"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Hanrong",
+          "lastName": "Ye"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Ryan",
+          "lastName": "Angilly"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Ali",
+          "lastName": "Taghibakhshi"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Shih-Yang",
+          "lastName": "Liu"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Siru",
+          "lastName": "Ouyang"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Greg",
+          "lastName": "Heinrich"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Pavlo",
+          "lastName": "Molchanov"
+        }
+      ],
+      "date": "2026-11-03"
+    },
+    "DOI": "10.48550/arXiv.2611.05306"
+  },
+  {
+    "expected": "bellmannTopologicalSimilaritySearch2021",
+    "item": {
+      "itemType": "journalArticle",
+      "title": "Topological Similarity Search in Large Combinatorial Fragment Spaces",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "Louis",
+          "lastName": "Bellmann"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Patrick",
+          "lastName": "Penner"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Matthias",
+          "lastName": "Rarey"
+        }
+      ],
+      "date": "2021-01-25"
+    },
+    "DOI": "10.1021/acs.jcim.0c00850"
+  },
+  {
+    "expected": "blakeLimitationsMolecularRepresentations2026",
+    "item": {
+      "itemType": "preprint",
+      "title": "On the limitations of molecular representations",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "Acer",
+          "lastName": "Blake"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Charlotte M.",
+          "lastName": "Deane"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Fergus",
+          "lastName": "Imrie"
+        }
+      ],
+      "date": "2026-11-09"
+    },
+    "DOI": "10.48550/arXiv.2611.08420"
+  },
+  {
+    "expected": "brownWhatDoesGeneralizable2026",
+    "item": {
+      "itemType": "journalArticle",
+      "title": "What Does Generalizable AI in Drug Discovery Really Mean?",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "Benjamin P.",
+          "lastName": "Brown"
+        }
+      ],
+      "date": "2026-11-18"
+    },
+    "DOI": "10.1021/acs.jmedchem.6c01918"
+  },
+  {
+    "expected": "chenPro$^2$AgentScientific2026",
+    "item": {
+      "itemType": "preprint",
+      "title": "Pro$^2$ Agent: Scientific Problem Probing for Autonomous AI R&D",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "Yixiong",
+          "lastName": "Chen"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Liqian",
+          "lastName": "Peng"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Tian",
+          "lastName": "Tan"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Ziqian",
+          "lastName": "Lin"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Blake Jianhang",
+          "lastName": "Chen"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Chao",
+          "lastName": "Zhao"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Yaojie",
+          "lastName": "Liu"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Alec",
+          "lastName": "Go"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Alan",
+          "lastName": "Yuille"
+        }
+      ],
+      "date": "2026-11-19"
+    },
+    "DOI": "10.48550/arXiv.2611.25357"
+  },
+  {
+    "expected": "eschmannRLtoolsFastPortable2024",
+    "item": {
+      "itemType": "preprint",
+      "title": "RLtools: A Fast, Portable Deep Reinforcement Learning Library for Continuous Control",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "Jonas",
+          "lastName": "Eschmann"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Dario",
+          "lastName": "Albani"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Giuseppe",
+          "lastName": "Loianno"
+        }
+      ],
+      "date": "2024-11-19",
+      "language": "en"
+    },
+    "DOI": "10.48550/arXiv.2306.03530"
+  },
+  {
+    "expected": "gutermuthBALLROOMSABenchmark2026",
+    "item": {
+      "itemType": "journalArticle",
+      "title": "BALLROOM A and S–A Benchmark Created Automatically from Structurally Resolved Pockets with Homogeneously Measured Affinities/Series",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "Torben",
+          "lastName": "Gutermuth"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Tobias",
+          "lastName": "Harren"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Matthias",
+          "lastName": "Rarey"
+        }
+      ],
+      "date": "2026-11-18"
+    },
+    "DOI": "10.1021/acs.jcim.6c02429"
+  },
+  {
+    "expected": "gutermuthEnablingAutomaticGeneration2026",
+    "item": {
+      "itemType": "journalArticle",
+      "title": "Enabling Automatic Generation of Protein–Ligand Complex Data Sets with Atomistic Detail",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "Torben",
+          "lastName": "Gutermuth"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Emanuel S. R.",
+          "lastName": "Ehmki"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Florian",
+          "lastName": "Flachsenberg"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Patrick",
+          "lastName": "Penner"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Sophia M. N.",
+          "lastName": "Hönig"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Tobias",
+          "lastName": "Harren"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Matthias",
+          "lastName": "Rarey"
+        }
+      ],
+      "date": "2026-05-25"
+    },
+    "DOI": "10.1021/acs.jcim.6c00150"
+  },
+  {
+    "expected": "kalliokoskiSpaceHASTENStructureBasedVirtual2025",
+    "item": {
+      "itemType": "journalArticle",
+      "title": "SpaceHASTEN: A Structure-Based Virtual Screening Tool for Nonenumerated Virtual Chemical Libraries",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "Tuomo",
+          "lastName": "Kalliokoski"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Ainoleena",
+          "lastName": "Turku"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Heikki",
+          "lastName": "Käsnänen"
+        }
+      ],
+      "date": "2025-01-13"
+    },
+    "DOI": "10.1021/acs.jcim.4c01790"
+  },
+  {
+    "expected": "hoenigUeberGroesseUnd2020",
+    "item": {
+      "itemType": "journalArticle",
+      "title": "Über Größe und Gestalt der Zellen",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "Sophia",
+          "lastName": "Hönig"
+        }
+      ],
+      "date": "2020-03-01",
+      "language": "de"
+    },
+    "DOI": ""
+  },
+  {
+    "expected": "smith-jonesVivoImagingBrains2001",
+    "item": {
+      "itemType": "journalArticle",
+      "title": "<i>In vivo</i> imaging of the brain's “dark” matter",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "J.",
+          "lastName": "Smith-Jones"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "Ł.",
+          "lastName": "Łukasiewicz"
+        }
+      ],
+      "date": "08/2001"
+    },
+    "DOI": ""
+  },
+  {
+    "expected": "garciamarquezStudyThings2nd1999",
+    "item": {
+      "itemType": "book",
+      "title": "A Study: Of X/Y Things — 2nd Edition",
+      "creators": [
+        {
+          "creatorType": "editor",
+          "firstName": "María",
+          "lastName": "García Márquez"
+        }
+      ],
+      "date": "March 5, 1999"
+    },
+    "DOI": ""
+  },
+  {
+    "expected": "einsteinCanQuantumMechanicalDescription1935",
+    "DOI": "10.1103/PhysRev.47.777",
+    "item": {
+      "itemType": "journalArticle",
+      "title": "Can Quantum-Mechanical Description of Physical Reality Be Considered Complete?",
+      "creators": [
+        {
+          "creatorType": "author",
+          "firstName": "A.",
+          "lastName": "Einstein"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "B.",
+          "lastName": "Podolsky"
+        },
+        {
+          "creatorType": "author",
+          "firstName": "N.",
+          "lastName": "Rosen"
+        }
+      ],
+      "date": "1935-05-15"
+    }
+  }
+]

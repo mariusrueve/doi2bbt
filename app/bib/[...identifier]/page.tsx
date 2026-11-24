@@ -26,8 +26,8 @@ export default async function BibPage({
             </p>
             <h1 id="resolve-title">Here’s your better BibTeX.</h1>
             <p className="lede">
-              This link resolves live metadata and applies doi2bbt’s frozen
-              citation-key algorithm.
+              This link resolves live metadata and applies doi2bbt’s port of
+              Better BibTeX’s default citation-key formula.
             </p>
           </div>
           <Converter initialIdentifier={value} />
